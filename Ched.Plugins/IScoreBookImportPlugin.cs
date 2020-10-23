@@ -15,6 +15,11 @@ namespace Ched.Plugins
     public interface IScoreBookImportPlugin : IPlugin
     {
         string FileFilter { get; }
-        ScoreBook Import(TextReader reader);
+        ScoreBook Import(IScoreBookImportPluginArgs args);
+    }
+
+    public interface IScoreBookImportPluginArgs : IDiagnosable
+    {
+        TextReader Reader { get; }
     }
 }

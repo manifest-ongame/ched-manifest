@@ -360,7 +360,14 @@ namespace Ched.UI
                     try
                     {
                         using (var reader = new StreamReader(q))
-                            LoadBook(p.Import(reader));
+                        {
+                            var args = new ScoreBookImportPluginArgs(reader);
+                            LoadBook(p.Import(args));
+                            if (args.Diagnostics.Count > 0)
+                            {
+                                // TODO: Diagnostics View
+                            }
+                        }
                     }
                     catch (Exception ex)
                     {
