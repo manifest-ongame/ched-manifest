@@ -63,6 +63,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BarIndexCalculator.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="EventCollection.cs" />
     <Compile Include="Events\BPMChangeEvent.cs" />
