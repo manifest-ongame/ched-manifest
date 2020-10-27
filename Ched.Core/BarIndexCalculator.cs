@@ -13,9 +13,14 @@ namespace Ched.Core
     /// </summary>
     public class BarIndexCalculator
     {
-        public int TicksPerBeat { get; }
+        private int TicksPerBeat { get; }
         private int BarTick => TicksPerBeat * 4;
-        private List<TimeSignatureItem> ReversedTimeSignatures { get; }
+        private IReadOnlyCollection<TimeSignatureItem> ReversedTimeSignatures { get; }
+
+        /// <summary>
+        /// 時間順にソートされた有効な拍子変更イベントのコレクションを取得します。
+        /// </summary>
+        public IEnumerable<TimeSignatureItem> TimeSignatures => ReversedTimeSignatures.Reverse();
 
         /// <summary>
         /// TicksPerBeatと拍子変更イベントから<see cref="BarIndexCalculator"/>のインスタンスを初期化します。
@@ -33,11 +38,11 @@ namespace Ched.Core
             for (int i = 0; i < ordered.Count; i++)
             {
                 // 小節先頭に配置されていないイベント
-                if (pos != ordered[i].Tick) throw new ArgumentException($"TimeSignatureChangeEvent does not align at the head of bars (Tick: {pos}).", "sigs");
-                var item = new TimeSignatureItem(pos, barIndex, ordered[i]);
+                if (pos != ordered[i].Tick) throw new InvalidTimeSignatureException($"TimeSignatureChangeEvent does not align at the head of bars (Tick: {ordered[i].Tick}).", ordered[i].Tick);
+                var item = new TimeSignatureItem(barIndex, ordered[i]);
 
                 // 時間逆順で追加
-                if (dic.ContainsKey(-pos)) throw new ArgumentException($"TimeSignatureChangeEvents duplicated (Tick: {pos}).", "sigs");
+                if (dic.ContainsKey(-pos)) throw new InvalidTimeSignatureException($"TimeSignatureChangeEvents duplicated (Tick: {ordered[i].Tick}).", ordered[i].Tick);
                 else dic.Add(-pos, item);
 
                 if (i < ordered.Count - 1)
@@ -74,6 +79,11 @@ namespace Ched.Core
             throw new InvalidOperationException();
         }
 
+        /// <summary>
+        /// 指定の小節に対応する拍子を取得します。
+        /// </summary>
+        /// <param name="barIndex">拍子を求める小節位置。このパラメータは0-basedです。</param>
+        /// <returns>小節位置に対応する拍子を表す<see cref="TimeSignatureChangeEvent"/></returns>
         public TimeSignatureChangeEvent GetTimeSignatureFromBarIndex(int barIndex)
         {
             foreach (var item in ReversedTimeSignatures)
@@ -107,15 +117,28 @@ namespace Ched.Core
             }
         }
 
+        /// <summary>
+        /// 拍子変更イベントに対応するTick位置と小節位置を表すクラスです。
+        /// </summary>
         public class TimeSignatureItem
         {
-            public int StartTick { get; }
+            /// <summary>
+            /// 拍子変更イベントに対応するTick位置を取得します。
+            /// </summary>
+            public int StartTick => TimeSignature.Tick;
+
+            /// <summary>
+            /// 拍子変更イベントに対応する小節位置を取得します。このフィールドは0-basedです。
+            /// </summary>
             public int StartBarIndex { get; }
+
+            /// <summary>
+            /// この<see cref="TimeSignatureItem"/>に関連付けられた拍子変更イベントを取得します。
+            /// </summary>
             public TimeSignatureChangeEvent TimeSignature { get; }
 
-            public TimeSignatureItem(int startTick, int startBarIndex, TimeSignatureChangeEvent timeSignature)
+            public TimeSignatureItem(int startBarIndex, TimeSignatureChangeEvent timeSignature)
             {
-                StartTick = startTick;
                 StartBarIndex = startBarIndex;
                 TimeSignature = timeSignature;
             }
